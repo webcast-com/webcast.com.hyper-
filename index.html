@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Auto Blog</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; }
+    .post { border-bottom: 1px solid #ddd; padding: 20px 0; }
+    img { max-width: 100%; border-radius: 8px; margin-bottom: 10px; cursor: pointer; }
+    h2 { margin: 10px 0; }
+    small { color: gray; }
+    /* Filters */
+    #filters { display: flex; justify-content: space-between; margin-bottom: 20px; gap: 10px; }
+    input, select { padding: 8px; font-size: 16px; flex: 1; }
+    /* Modal */
+    #imgModal { display:none; position:fixed; z-index:9999; padding-top:60px;
+      left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.9); text-align:center; }
+    #imgModal img { margin:auto; display:block; max-width:90%; max-height:80%; border-radius:10px; }
+    #closeModal { position:absolute; top:20px; right:35px; color:#fff; font-size:40px; cursor:pointer; }
+    .prev, .next { cursor:pointer; position:absolute; top:50%; padding:16px; color:white; font-weight:bold; font-size:40px; }
+    .prev { left:0; } .next { right:0; }
+    .prev:hover, .next:hover { color:#ccc; }
+    /* Loader + Buttons */
+    #loader { text-align:center; padding:20px; color:gray; display:none; }
+    #loadMoreBtn { display:none; margin: 20px auto; padding: 10px 20px;
+      font-size: 16px; cursor: pointer; border: none; background: #007BFF; color: white; border-radius: 6px; }
+    #loadMoreBtn:hover { background: #0056b3; }
+    /* Back to Top */
+    #backToTop {
+      display: none;
+      position: fixed;
+      bottom: 40px;
+      right: 40px;
+      z-index: 10000;
+      font-size: 18px;
+      border: none;
+      outline: none;
+      background-color: #007BFF;
+      color: white;
+      cursor: pointer;
+      padding: 12px 16px;
+      border-radius: 50%;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      transition: background 0.3s;
+    }
+    #backToTop:hover { background-color: #0056b3; }
+  </style>
+</head>
+<body>
+  <h1>Auto Blog</h1>
+
+  <!-- Filters -->
+  <div id="filters">
+    <input type="text" id="search" placeholder="Search posts...">
+    <select id="category">
+      <option value="all">All Sources</option>
+    </select>
+  </div>
+
+  <div id="posts">Loading...</div>
+  <div id="loader">Loading more posts...</div>
+  <button id="loadMoreBtn" onclick="loadMore()">Load More</button>
+
+  <!-- Back to Top -->
+  <button id="backToTop" onclick="scrollToTop()">↑</button>
+
+  <!-- Modal Gallery -->
+  <div id="imgModal">
+    <span id="closeModal">&times;</span>
+    <img id="modalImg" src="">
+    <a class="prev" onclick="changeImage(-1)">&#10094;</a>
+    <a class="next" onclick="changeImage(1)">&#10095;</a>
+  </div>
+
+  <script>
+    let posts = [];
+    let filteredPosts = [];
+    let images = [];
+    let currentIndex = 0;
+    let itemsPerPage = 10;
+    let currentPage = 0;
+    let loading = false;
+
+    async function loadPosts() {
+      const res = await fetch('/api/posts');
+      posts = await res.json();
+      filteredPosts = posts;
+
+      // Populate categories
+      const sources = [...new Set(posts.map(p => p.source))];
+      const categorySelect = document.getElementById("category");
+      categorySelect.innerHTML = `<option value="all">All Sources</option>` +
+        sources.map(s => `<option value="${s}">${s}</option>`).join("");
+
+      resetPagination();
+    }
+
+    function resetPagination() {
+      currentPage = 0;
+      document.getElementById('posts').innerHTML = "";
+      loadMore();
+    }
+
+    function loadMore() {
+      if (loading) return;
+      loading = true;
+      document.getElementById("loader").style.display = "block";
+
+      setTimeout(() => {
+        const start = currentPage * itemsPerPage;
+        const end = start + itemsPerPage;
+        const pagePosts = filteredPosts.slice(start, end);
+
+        images = filteredPosts.map(p => p.image || "https://via.placeholder.com/800x400?text=No+Image");
+
+        pagePosts.forEach((post, index) => {
+          const globalIndex = start + index;
+          document.getElementById('posts').innerHTML += `
+            <div class="post">
+              <img src="${images[globalIndex]}" onclick="openModal(${globalIndex})">
+              <h2><a href="${post.link}" target="_blank">${post.title}</a></h2>
+              <small>${new Date(post.date).toDateString()} — ${post.source}</small>
+              <p>${post.description.substring(0,200)}...</p>
+            </div>
+          `;
+        });
+
+        currentPage++;
+        loading = false;
+        document.getElementById("loader").style.display = "none";
+
+        // Show button if there are more posts
+        if (currentPage * itemsPerPage < filteredPosts.length) {
+          document.getElementById("loadMoreBtn").style.display = "block";
+        } else {
+          document.getElementById("loadMoreBtn").style.display = "none";
+        }
+      }, 500);
+    }
+
+    // Infinite scroll
+    window.addEventListener("scroll", () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
+        if (currentPage * itemsPerPage < filteredPosts.length) {
+          loadMore();
+        }
+      }
+      // Show Back to Top button after scrolling 500px
+      if (document.body.scrollTop > 500 || document.documentElement.scrollTop > 500) {
+        document.getElementById("backToTop").style.display = "block";
+      } else {
+        document.getElementById("backToTop").style.display = "none";
+      }
+    });
+
+    function scrollToTop() {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    // Modal gallery
+    function openModal(index) {
+      currentIndex = index;
+      document.getElementById("modalImg").src = images[currentIndex];
+      document.getElementById("imgModal").style.display = "block";
+    }
+    function changeImage(dir) {
+      currentIndex += dir;
+      if (currentIndex < 0) currentIndex = images.length - 1;
+      if (currentIndex >= images.length) currentIndex = 0;
+      document.getElementById("modalImg").src = images[currentIndex];
+    }
+    document.getElementById("closeModal").onclick = () => {
+      document.getElementById("imgModal").style.display = "none";
+    };
+    window.onclick = (event) => {
+      if (event.target === document.getElementById("imgModal"))
+        document.getElementById("imgModal").style.display = "none";
+    };
+    window.addEventListener("keydown", (e) => {
+      if (document.getElementById("imgModal").style.display === "block") {
+        if (e.key === "ArrowRight") changeImage(1);
+        if (e.key === "ArrowLeft") changeImage(-1);
+        if (e.key === "Escape") document.getElementById("imgModal").style.display = "none";
+      }
+    });
+
+    // Filters
+    document.getElementById("search").addEventListener("input", applyFilters);
+    document.getElementById("category").addEventListener("change", applyFilters);
+
+    function applyFilters() {
+      const searchVal = document.getElementById("search").value.toLowerCase();
+      const categoryVal = document.getElementById("category").value;
+
+      filteredPosts = posts.filter(p => {
+        const matchesSearch = p.title.toLowerCase().includes(searchVal) ||
+                              p.description.toLowerCase().includes(searchVal);
+        const matchesCategory = (categoryVal === "all" || p.source === categoryVal);
+        return matchesSearch && matchesCategory;
+      });
+
+      resetPagination();
+    }
+
+    loadPosts();
+  </script>
+</body>
+</html>
