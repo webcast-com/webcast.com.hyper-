@@ -46,3 +46,57 @@ window.onclick = function(event) {
   const modal = document.getElementById("imgModal");
   if (event.target === modal) modal.style.display = "none";
 };
+
+// server.js
+const express = require('express');
+const Parser = require('rss-parser');
+const path = require('path');
+
+const app = express();
+const parser = new Parser();
+
+// RSS feeds (you can add/remove here)
+const feeds = [
+  "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+  "https://www.theguardian.com/world/rss"
+];
+
+let allPosts = [];
+
+async function fetchFeeds() {
+  let posts = [];
+  for (const url of feeds) {
+    try {
+      const feed = await parser.parseURL(url);
+      feed.items.forEach(item => {
+        posts.push({
+          title: item.title,
+          link: item.link,
+          description: item.contentSnippet || "",
+          date: item.pubDate || new Date(),
+          source: feed.title,
+          image: item.enclosure?.url || 
+                 item.content?.match(/<img[^>]+src="([^">]+)"/)?.[1] || null
+        });
+      });
+    } catch (err) {
+      console.error("❌ Failed to fetch feed:", url, err.message);
+    }
+  }
+  allPosts = posts.sort((a, b) => new Date(b.date) - new Date(a.date));
+}
+
+// Refresh every 15 mins
+fetchFeeds();
+setInterval(fetchFeeds, 15 * 60 * 1000);
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+// API for posts
+app.get('/api/posts', (req, res) => {
+  res.json(allPosts);
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+
