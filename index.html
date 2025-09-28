@@ -65,6 +65,16 @@
     <p>Loading posts...</p>
   </section>
 
+  <div class="post">
+  <img src="${post.image || 'https://via.placeholder.com/800x400?text=No+Image'}" 
+       alt="Post image"
+       style="max-width:100%; border-radius:8px; margin-bottom:10px; cursor:pointer;"
+       onclick="openModal('${post.image || 'https://via.placeholder.com/800x400?text=No+Image'}')">
+  <h2><a href="${post.link}" target="_blank">${post.title}</a></h2>
+  <small>${new Date(post.date).toDateString()} — ${post.source}</small>
+  <p>${post.description.substring(0, 200)}...</p>
+</div>
+
   <footer>
     <p>&copy; 2025 My Auto Blog</p>
   </footer>
