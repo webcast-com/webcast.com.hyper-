@@ -60,16 +60,69 @@
     <h1>My Auto Blog</h1>
     <p>Powered by RSS Feeds</p>
   </header>
-
-    <div class="post">
-  <img src="${post.image || 'https://via.placeholder.com/800x400?text=No+Image'}" 
+  <div class="post">
+    <img src="${post.image || 'https://via.placeholder.com/800x400?text=No+Image'}" 
        alt="Post image"
        style="max-width:100%; border-radius:8px; margin-bottom:10px; cursor:pointer;"
        onclick="openModal('${post.image || 'https://via.placeholder.com/800x400?text=No+Image'}')">
-  <h2><a href="${post.link}" target="_blank">${post.title}</a></h2>
-  <small>${new Date(post.date).toDateString()} — ${post.source}</small>
-  <p>${post.description.substring(0, 200)}...</p>
+     <h2><a href="${post.link}" target="_blank">${post.title}</a></h2>
+    <small>${new Date(post.date).toDateString()} — ${post.source}</small>
+   <p>${post.description.substring(0, 200)}...</p>
+ </div>
+  <!-- Modal -->
+<div id="imgModal">
+  <span id="closeModal">&times;</span>
+  <img id="modalImg" src="">
+  <a class="prev" onclick="changeImage(-1)">&#10094;</a>
+  <a class="next" onclick="changeImage(1)">&#10095;</a>
 </div>
+
+<style>
+  /* Modal container */
+  #imgModal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    padding-top: 60px;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: rgba(0,0,0,0.9);
+    text-align: center;
+  }
+  #imgModal img {
+    margin: auto;
+    display: block;
+    max-width: 90%;
+    max-height: 80%;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.7);
+  }
+  #imgModal span {
+    position: absolute;
+    top: 20px;
+    right: 35px;
+    color: #fff;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  /* Next & Prev buttons */
+  .prev, .next {
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    padding: 16px;
+    color: white;
+    font-weight: bold;
+    font-size: 40px;
+    transition: 0.3s;
+    user-select: none;
+  }
+  .prev { left: 0; }
+  .next { right: 0; }
+  .prev:hover, .next:hover { color: #ccc; }
+</style>
 
   <section id="posts">
     <p>Loading posts...</p>
