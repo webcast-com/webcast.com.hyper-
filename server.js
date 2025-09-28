@@ -10,7 +10,8 @@ app.use(cors());
 
 const feeds = [
   "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
-  "https://feeds.bbci.co.uk/news/rss.xml"
+  "https://feeds.bbci.co.uk/news/rss.xml",
+  "https://www.xvideos.com/tags/xxx-porn"
 ];
 
 app.get("/posts", async (req, res) => {
