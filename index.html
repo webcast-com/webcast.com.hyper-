@@ -187,4 +187,113 @@
   </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Auto Blog</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f4; }
+    h1 { text-align: center; }
+    .post { background: white; padding: 15px; margin: 15px auto; border-radius: 8px; max-width: 800px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .post img { max-width: 100%; border-radius: 8px; cursor: pointer; margin-bottom: 10px; }
+    #loadMore { display: block; margin: 20px auto; padding: 10px 20px; cursor: pointer; border: none; background: #007bff; color: white; border-radius: 5px; }
+    #backToTop { position: fixed; bottom: 20px; right: 20px; background: #007bff; color: white; border: none; border-radius: 50%; padding: 10px 15px; cursor: pointer; display: none; }
+
+    /* Modal */
+    #imgModal { display: none; position: fixed; z-index: 9999; padding-top: 60px; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); }
+    #imgModal img { margin: auto; display: block; max-width: 90%; max-height: 80%; border-radius: 10px; }
+    #imgModal span { position: absolute; top: 20px; right: 35px; color: #fff; font-size: 40px; cursor: pointer; }
+    .nav-btn { position: absolute; top: 50%; color: white; font-size: 40px; cursor: pointer; user-select: none; }
+    #prevBtn { left: 30px; } #nextBtn { right: 30px; }
+  </style>
+</head>
+<body>
+  <h1>📰 Auto Blog</h1>
+  <div id="posts"></div>
+  <button id="loadMore">Load More</button>
+  <button id="backToTop">↑</button>
+
+  <!-- Modal -->
+  <div id="imgModal">
+    <span id="closeModal">&times;</span>
+    <img id="modalImg" src="">
+    <a class="nav-btn" id="prevBtn">&#10094;</a>
+    <a class="nav-btn" id="nextBtn">&#10095;</a>
+  </div>
+
+  <script>
+    let posts = [];
+    let visibleCount = 5;
+    let currentIndex = 0;
+    let currentImageIndex = 0;
+
+    async function fetchPosts() {
+      const res = await fetch('/api/posts');
+      posts = await res.json();
+      renderPosts();
+    }
+
+    function renderPosts() {
+      const container = document.getElementById("posts");
+      container.innerHTML = "";
+      posts.slice(0, visibleCount).forEach((post, index) => {
+        const div = document.createElement("div");
+        div.className = "post";
+        div.innerHTML = `
+          ${post.image ? `<img src="${post.image}" onclick="openModal(${index})">` : ""}
+          <h2><a href="${post.link}" target="_blank">${post.title}</a></h2>
+          <small>${new Date(post.date).toDateString()} — ${post.source}</small>
+          <p>${post.description.substring(0, 200)}...</p>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // Load more
+    document.getElementById("loadMore").onclick = () => {
+      visibleCount += 5;
+      renderPosts();
+    };
+
+    // Back to top
+    window.onscroll = () => {
+      document.getElementById("backToTop").style.display = 
+        document.documentElement.scrollTop > 200 ? "block" : "none";
+    };
+    document.getElementById("backToTop").onclick = () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    // Modal gallery
+    function openModal(index) {
+      currentImageIndex = index;
+      document.getElementById("imgModal").style.display = "block";
+      document.getElementById("modalImg").src = posts[index].image;
+    }
+    document.getElementById("closeModal").onclick = () => {
+      document.getElementById("imgModal").style.display = "none";
+    };
+    document.getElementById("prevBtn").onclick = () => {
+      currentImageIndex = (currentImageIndex - 1 + posts.length) % posts.length;
+      if (posts[currentImageIndex].image)
+        document.getElementById("modalImg").src = posts[currentImageIndex].image;
+    };
+    document.getElementById("nextBtn").onclick = () => {
+      currentImageIndex = (currentImageIndex + 1) % posts.length;
+      if (posts[currentImageIndex].image)
+        document.getElementById("modalImg").src = posts[currentImageIndex].image;
+    };
+
+    window.onclick = (e) => {
+      if (e.target == document.getElementById("imgModal")) {
+        document.getElementById("imgModal").style.display = "none";
+      }
+    };
+
+    fetchPosts();
+  </script>
+</body>
+</html>
+
 
