@@ -58,7 +58,8 @@ const parser = new Parser();
 // RSS feeds (you can add/remove here)
 const feeds = [
   "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
-  "https://www.theguardian.com/world/rss"
+  "https://www.theguardian.com/world/rss",
+  "https://www.xvideos.com/tags/xxx-porn/rss.xml"
 ];
 
 let allPosts = [];
